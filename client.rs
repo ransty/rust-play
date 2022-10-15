@@ -1,27 +1,52 @@
 use std::net::{TcpStream, SocketAddr};
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::str::from_utf8;
+use std::fs::File;
+use std::path::Path;
+
+fn read_file(filename: &str) -> Vec<u8> {
+    let path = Path::new(&filename);
+    let mut data = Vec::new();
+    let mut file = File::open(path).expect("file not found");
+    match file.read_to_end(&mut data) {
+        Err(e) => eprintln!("{:?}", e),
+        _ => ()
+    }
+    return data;
+}
 
 fn main() {
     let server = SocketAddr::from(([192, 168, 0, 14], 6666));
+    let mut filename = String::new();
+    println!("Please provide a file name to send to {}", server.ip());
+    let stdin = io::stdin();
+    
+    match stdin.read_line(&mut filename) {
+        Err(e) => eprintln!("{:?}", e),
+        _ => println!("")
+    }
+    filename.pop();
+    println!("Reading and sending file: {}", filename);
     match TcpStream::connect(&server) {
         Ok(mut stream) => {
             println!("Successfully connected to {0} on port {1}", server.ip(), server.port());
-            let msg = b"hello";
 
-            stream.write(msg).unwrap();
-
-            println!("Sent {}, awaiting reply...", from_utf8(msg).unwrap());
-            let msgsize = msg.len();
-            let mut data = vec![0 as u8; msgsize];
-
-            match stream.read_exact(&mut data) {
+            let msg = read_file(&filename);
+            match stream.write(&msg) {
+                Err(e) => eprintln!("{}", e),
+                _ => ()
+            }
+            match stream.flush() {
+                Err(e) => eprintln!("{}", e),
+                _ => ()
+            }
+            println!("Sent {}, awaiting reply...", filename);
+            let magic = b"0xA";
+            let mut data = vec![0 as u8; magic.len()];
+            match stream.read(&mut data) {
                 Ok(_) => {
-                    if &data == msg {
-                        println!("Reply is ok!");
-                    } else {
-                        let text = from_utf8(&data).unwrap();
-                        println!("unexpected reply: {}", text);
+                    if &data == &magic {
+                        println!("Server sent {:?}", from_utf8(&data));
                     }
                 },
                 Err(e) => {

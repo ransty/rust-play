@@ -1,24 +1,25 @@
 use std::thread;
 use std::net::{TcpListener, TcpStream, SocketAddr};
-use std::io::{Read, Write, Error};
-use std::str;
+use std::io::{Write, Read, Error, BufReader, BufWriter};
 
-fn handle_client(mut stream: TcpStream) -> Result<(), Error> {
-    let mut data = [0 as u8; 4096];
+fn handle_client(stream: TcpStream) -> Result<(), Error>{
+    let stream_clone = stream.try_clone().unwrap();
+    let mut reader = BufReader::new(stream);
+    let mut writer = BufWriter::new(stream_clone);
+    // acknowledge the client has sent some data
+    writer.write(b"0xA")?;
+    writer.flush()?;
+    let mut data = Vec::new();
     loop {
-        let nbytes = stream.read(&mut data)?;
-        if nbytes == 0 {
-            return Ok(());
+        match reader.read_to_end(&mut data) {
+            Err(e) => println!("error {}", e),
+            Ok(okdata) => {
+                if okdata == 0 {
+                    continue;
+                }
+            println!("{:?}", data);
+            }
         }
-        /*
-        for i in 0..nbytes {
-            print!("{}", str::from_utf8(data[i]).unwrap());
-        }
-        println!("");
-        */
-        println!("Client sent: {}", str::from_utf8(&data).unwrap());
-        stream.write(&data[..nbytes])?;
-        stream.flush()?;
     }
 }
 
@@ -27,6 +28,7 @@ fn main() {
     let listener = TcpListener::bind(&bindaddr).unwrap();
     println!("Server listening on port {}", bindaddr.port());
     for stream in listener.incoming() {
+
         match stream {
             Ok(stream) => {
                 println!("New connection {}", stream.peer_addr().unwrap());
