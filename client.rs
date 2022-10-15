@@ -1,17 +1,17 @@
-use std::net::{TcpStream};
+use std::net::{TcpStream, SocketAddr};
 use std::io::{Read, Write};
 use std::str::from_utf8;
 
 fn main() {
-    match TcpStream::connect("192.168.0.14:6666") {
+    let server = SocketAddr::from(([192, 168, 0, 14], 6666));
+    match TcpStream::connect(&server) {
         Ok(mut stream) => {
-            println!("Successfully connected to 192.168.0.14 on port 6666");
+            println!("Successfully connected to {0} on port {1}", server.ip(), server.port());
             let msg = b"hello";
 
             stream.write(msg).unwrap();
 
-            println!("Sent hello, awaiting reply...");
-
+            println!("Sent {}, awaiting reply...", from_utf8(msg).unwrap());
             let mut data = [0 as u8; 5]; // 5 byte buffer
 
             match stream.read_exact(&mut data) {
