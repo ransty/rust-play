@@ -1,11 +1,10 @@
-// imports
 use std::thread;
-use std::net::{TcpListener, TcpStream};
+use std::net::{TcpListener, TcpStream, SocketAddr};
 use std::io::{Read, Write, Error};
 use std::str;
 
 fn handle_client(mut stream: TcpStream) -> Result<(), Error> {
-    let mut data = [0 as u8; 50]; // 50 byte buffer
+    let mut data = [0 as u8; 4096];
     loop {
         let nbytes = stream.read(&mut data)?;
         if nbytes == 0 {
@@ -24,8 +23,9 @@ fn handle_client(mut stream: TcpStream) -> Result<(), Error> {
 }
 
 fn main() {
-    let listener = TcpListener::bind("0.0.0.0:6666").unwrap();
-    println!("Server listening on port 6666");
+    let bindaddr = SocketAddr::from(([0, 0, 0, 0], 6666));
+    let listener = TcpListener::bind(&bindaddr).unwrap();
+    println!("Server listening on port {}", bindaddr.port());
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
