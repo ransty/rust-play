@@ -12,7 +12,8 @@ fn main() {
             stream.write(msg).unwrap();
 
             println!("Sent {}, awaiting reply...", from_utf8(msg).unwrap());
-            let mut data = [0 as u8; 5]; // 5 byte buffer
+            let msgsize = msg.len();
+            let mut data = vec![0 as u8; msgsize]; // 5 byte buffer
 
             match stream.read_exact(&mut data) {
                 Ok(_) => {
