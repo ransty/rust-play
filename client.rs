@@ -45,7 +45,7 @@ fn main() {
     });
     
     if fsmetadata.is_file() == false {
-        println!("{} is not a file", ftc.filepath);
+        println!("Problem reading file: \"{}\" is not a file", ftc.filepath);
         process::exit(1);
     }
 
