@@ -9,15 +9,15 @@ fn handle_client(stream: TcpStream) -> Result<(), Error>{
     // acknowledge the client has sent some data
     writer.write(b"0xA")?;
     writer.flush()?;
-    let mut data = Vec::new();
+    let mut buff = Vec::new();
     loop {
-        match reader.read_to_end(&mut data) {
+        match reader.read_to_end(&mut buff) {
             Err(e) => println!("error {}", e),
             Ok(okdata) => {
                 if okdata == 0 {
                     continue;
                 }
-            println!("{:?}", data);
+            println!("{:?}", buff);
             }
         }
     }

@@ -1,8 +1,8 @@
 use std::net::{TcpStream, SocketAddr};
-use std::io::{self, Read, Write};
-use std::str::from_utf8;
+use std::io::{Read, Write};
 use std::fs::File;
 use std::path::Path;
+use std::env::args;
 
 fn read_file(filename: &str) -> Vec<u8> {
     let path = Path::new(&filename);
@@ -16,16 +16,9 @@ fn read_file(filename: &str) -> Vec<u8> {
 }
 
 fn main() {
+    let arguments: Vec<String> = args().collect();
     let server = SocketAddr::from(([192, 168, 0, 14], 6666));
-    let mut filename = String::new();
-    println!("Please provide a file name to send to {}", server.ip());
-    let stdin = io::stdin();
-    
-    match stdin.read_line(&mut filename) {
-        Err(e) => eprintln!("{:?}", e),
-        _ => println!("")
-    }
-    filename.pop();
+    let filename = &arguments[1];
     println!("Reading and sending file: {}", filename);
     match TcpStream::connect(&server) {
         Ok(mut stream) => {
@@ -46,7 +39,7 @@ fn main() {
             match stream.read(&mut data) {
                 Ok(_) => {
                     if &data == &magic {
-                        println!("Server sent {:?}", from_utf8(&data));
+                        println!("Server successfully received {}", filename);
                     }
                 },
                 Err(e) => {
