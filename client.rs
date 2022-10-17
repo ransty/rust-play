@@ -1,8 +1,10 @@
 use std::net::{TcpStream, SocketAddr};
 use std::io::{Read, Write};
 use std::fs::File;
+use std::fs;
 use std::path::Path;
 use std::env::args;
+use std::process;
 
 fn read_file(filename: &str) -> Vec<u8> {
     let path = Path::new(&filename);
@@ -12,13 +14,36 @@ fn read_file(filename: &str) -> Vec<u8> {
         Err(e) => eprintln!("{:?}", e),
         _ => ()
     }
-    return data;
+    data
+}
+
+struct FileTransferConfig {
+    filepath: String
+}
+
+impl FileTransferConfig {
+    fn build(arguments: &[String]) -> Result<FileTransferConfig, &'static str> {
+        if arguments.len() < 2 {
+            return Err("You need to specify a file!");
+        }
+        let filepath = arguments[1].clone();
+        Ok(FileTransferConfig { filepath })
+    }
 }
 
 fn main() {
     let arguments: Vec<String> = args().collect();
+
+    let ftc = FileTransferConfig::build(&arguments).unwrap_or_else(|err| {
+        println!("Problem parsing arguments: {err}");
+        process::exit(1);
+    });
+    let fsmetadata = fs::metadata(ftc.filepath.clone());
+    assert!(fsmetadata.expect("not a file").is_file());
+
+    let filename = ftc.filepath;
+
     let server = SocketAddr::from(([192, 168, 0, 14], 6666));
-    let filename = &arguments[1];
     println!("Reading and sending file: {}", filename);
     match TcpStream::connect(&server) {
         Ok(mut stream) => {
