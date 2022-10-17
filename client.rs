@@ -38,8 +38,16 @@ fn main() {
         println!("Problem parsing arguments: {err}");
         process::exit(1);
     });
-    let fsmetadata = fs::metadata(ftc.filepath.clone());
-    assert!(fsmetadata.expect("not a file").is_file());
+
+    let fsmetadata = fs::metadata(ftc.filepath.clone()).unwrap_or_else(|err| {
+        println!("Problem reading metadata for file \"{0}\": {err}", ftc.filepath);
+        process::exit(1);
+    });
+    
+    if fsmetadata.is_file() == false {
+        println!("{} is not a file", ftc.filepath);
+        process::exit(1);
+    }
 
     let filename = ftc.filepath;
 
