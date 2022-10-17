@@ -9,7 +9,7 @@ use std::process;
 fn read_file(filename: &str) -> Vec<u8> {
     let path = Path::new(&filename);
     let mut data = Vec::new();
-    let mut file = File::open(path).expect("file not found");
+    let mut file = File::open(path).expect("file went MIA");
     match file.read_to_end(&mut data) {
         Err(e) => eprintln!("{:?}", e),
         _ => ()
@@ -31,14 +31,8 @@ impl FileTransferConfig {
     }
 }
 
-fn main() {
-    let arguments: Vec<String> = args().collect();
 
-    let ftc = FileTransferConfig::build(&arguments).unwrap_or_else(|err| {
-        println!("Problem parsing arguments: {err}");
-        process::exit(1);
-    });
-
+fn handle_ftc(ftc: &FileTransferConfig) -> bool {
     let fsmetadata = fs::metadata(ftc.filepath.clone()).unwrap_or_else(|err| {
         println!("Problem reading metadata for file \"{0}\": {err}", ftc.filepath);
         process::exit(1);
@@ -48,6 +42,18 @@ fn main() {
         println!("Problem reading file: \"{}\" is not a file", ftc.filepath);
         process::exit(1);
     }
+    true
+}
+
+fn main() {
+    let arguments: Vec<String> = args().collect();
+
+    let ftc = FileTransferConfig::build(&arguments).unwrap_or_else(|err| {
+        println!("Problem parsing arguments: {err}");
+        process::exit(1);
+    });
+
+    assert!(handle_ftc(&ftc));
 
     let filename = ftc.filepath;
 
